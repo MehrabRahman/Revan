@@ -1,2 +1,0 @@
-Main-Class: com.revature.App
-Class-Path: lib/slf4j-api-1.7.9.jar lib/slf4j-simple-1.7.9.jar

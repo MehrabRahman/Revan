@@ -1,65 +1,93 @@
 #!/bin/bash
-
 MAINCLASS=com.revature.App
 CLASSPATH=
-for i in `ls lib/*` 
-do
-        CLASSPATH=${CLASSPATH}:${i}
-done
 
 clean() {
-        echo 'Cleaning bin directory...'
-        rm -rf bin/
+        echo $'\nCleaning project...\n'
+        rm -rf target/
 }
 
 verify() {
-        if [ ! -d lib ]; then
-                mkdir -p lib
+        if [ ! -d target/dependencies ]; then
+                mkdir -p target/dependencies
         fi
-        echo "Verifying dependencies"
-        wget --show-progress -qcNP lib -i dependencies.txt
+        echo $'\nVerifying dependencies...\n'
+        wget --show-progress -qcNP target/dependencies -i dependencies.txt
 }
 
 compile() {
         verify
-        if [ ! -d bin ]; then
-                mkdir -p bin
+        if [ ! -d target/classes ]; then
+                mkdir -p target/classes
         fi
         
-        echo 'Compiling...'
+        echo $'\nCompiling...\n'
         javac \
-                -cp "${CLASSPATH}"      \
-                -d bin/                 \
-                -source 1.8             \
-                -target 1.8             \
-                -Xlint                  \
-                -sourcepath src         \
-                src/com/revature/App.java
+                -cp "${CLASSPATH}"                      \
+                -d target/classes/                      \
+                -source 1.8                             \
+                -target 1.8                             \
+                -Xlint                                  \
+                -sourcepath src/main/java/              \
+                src/main/java/com/revature/App.java
+}
+
+compileTests() {
+        compile
+        if [ ! -d target/test-classes ]; then
+                mkdir -p target/test-classes
+        fi
+        
+        echo $'\nCompiling unit tests...\n'
+        javac \
+                -cp target/classes/:"${CLASSPATH}"                         \
+                -d target/test-classes/                         \
+                -source 1.8                                     \
+                -target 1.8                                     \
+                -Xlint                                          \
+                -sourcepath src/test/java/:src/main/java/       \
+                src/test/java/com/revature/accounts/*.java
+}
+
+test() {
+        compileTests
+
+        echo $'\Running unit tests...\n'
+        java \
+                -cp target/classes/:target/test-classes/:"${CLASSPATH}" \
+                org.junit.runner.JUnitCore \
+                com.revature.accounts.AccountsTestSuite
+
 }
 
 package() {
-        compile
-        echo 'Creating Manifest'
-        echo "Main-Class:" $MAINCLASS > Manifest.txt
-        echo "Class-Path:" $(ls -1 lib/*) >> Manifest.txt
+        test
+        echo $'\nCreating Manifest...\n'
+        echo "Main-Class:" $MAINCLASS > target/classes/Manifest.txt
+        echo "Class-Path:" $(cd target && ls -1 dependencies/*) >> target/classes/Manifest.txt
 
-        echo 'Packaging jar file...'
-        jar cfm app.jar Manifest.txt -C bin .
+        echo $'\nPackaging jar file...\n'
+        jar cfm target/app.jar target/classes/Manifest.txt -C target/classes .
 }
 
 debug() {
-        echo 'Running in debug mode...'
+        echo $'\nRunning in debug mode...\n'
         
         java \
-        -cp bin/:"${CLASSPATH}" \
+        -cp target/classes/:"${CLASSPATH}" \
         -Dorg.slf4j.simpleLogger.defaultLogLevel=DEBUG \
         "${MAINCLASS}"
 }
 
 runjar() {
-        echo 'Running jar...'
-        java -jar app.jar
+        echo $'\nRunning jar...\n'
+        java -jar target/app.jar
 }
+
+for i in `ls target/dependencies/*` 
+do
+        CLASSPATH=${CLASSPATH}:${i}
+done
 
 for i in "$@"
 do
