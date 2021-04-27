@@ -1,0 +1,67 @@
+#!/bin/bash
+
+MAINCLASS=com.revature.App
+CLASSPATH=
+for i in `ls lib/*` 
+do
+        CLASSPATH=${CLASSPATH}:${i}
+done
+
+clean() {
+        echo 'Cleaning bin directory...'
+        rm -rf bin/
+}
+
+verify() {
+        if [ ! -d lib ]; then
+                mkdir -p lib
+        fi
+        echo "Verifying dependencies"
+        wget --show-progress -qcNP lib -i dependencies.txt
+}
+
+compile() {
+        verify
+        if [ ! -d bin ]; then
+                mkdir -p bin
+        fi
+        
+        echo 'Compiling...'
+        javac \
+                -cp "${CLASSPATH}"      \
+                -d bin/                 \
+                -source 1.8             \
+                -target 1.8             \
+                -Xlint                  \
+                -sourcepath src         \
+                src/com/revature/App.java
+}
+
+package() {
+        compile
+        echo 'Creating Manifest'
+        echo "Main-Class:" $MAINCLASS > Manifest.txt
+        echo "Class-Path:" $(ls -1 lib/*) >> Manifest.txt
+
+        echo 'Packaging jar file...'
+        jar cfm app.jar Manifest.txt -C bin .
+}
+
+debug() {
+        echo 'Running in debug mode...'
+        
+        java \
+        -cp bin/:"${CLASSPATH}" \
+        -Dorg.slf4j.simpleLogger.defaultLogLevel=DEBUG \
+        "${MAINCLASS}"
+}
+
+runjar() {
+        echo 'Running jar...'
+        java -jar app.jar
+}
+
+for i in "$@"
+do
+        "$i"
+done
