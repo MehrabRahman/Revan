@@ -46,7 +46,7 @@ compileTests() {
                 -target 1.8                                     \
                 -Xlint                                          \
                 -sourcepath src/test/java/:src/main/java/       \
-                src/test/java/com/revature/accounts/*.java
+                src/test/java/com/revature/AppTests.java
 }
 
 test() {
@@ -56,7 +56,7 @@ test() {
         java \
                 -cp target/classes/:target/test-classes/:"${CLASSPATH}" \
                 org.junit.runner.JUnitCore \
-                com.revature.accounts.AccountsTestSuite
+                com.revature.AppTests
 
 }
 
